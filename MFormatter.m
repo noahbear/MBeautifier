@@ -250,6 +250,43 @@ classdef MFormatter < handle
             
             formattedSource = [replacedTextArray{:}];
         end
+        
+        function formattedSource = autoIndentComments(obj, source)
+            obj.BlockCommentDepth = 0;
+            obj.IsInBlockComment = false;
+            replacedTextArray = {};
+            
+            newLine = sprintf('\n');
+            textArray = regexp(source, newLine, 'split');
+            commentInfoTb = zeros(numel(textArray), 3);
+            for j = 1:numel(textArray)
+                line = textArray{j};
+                [actCode{j}, actComment{j}, splittingPos{j}, isSectionSeparator] = obj.findComment(line);
+                commentInfoTb(j,1) = splittingPos{j} > 1;  %是否为有效行 既有代码又有注释
+                commentInfoTb(j,2) = splittingPos{j} - 1;  %本行代码结尾的位置
+                commentInfoTb(j,3) = length(actComment{j});%本行注释的长度
+            end
+            
+            peakProminence = max(25, (max(commentInfoTb(:,2)) - min(commentInfoTb(:,2))) / 2);
+            [peak1, peak1idx] = findpeaks(commentInfoTb(:,2), 'MinPeakProminence', peakProminence);
+            x = commentInfoTb(commentInfoTb(:,1)'>0, 2);
+            peak2 = [max([25,peak1(1)/2,x(1)]); peak1; max([25,peak1(end)/2,x(end)])];
+            peak2idx = [1; peak1idx; size(commentInfoTb, 1)];
+            peak = interp1(peak2idx, peak2, [1:size(commentInfoTb, 1)], 'previous');
+            indentWidth = max(peak', commentInfoTb(:,2));
+            indentWidth(indentWidth < 80) = indentWidth(indentWidth < 80) + 15;
+            
+            for j = 1:numel(textArray)
+                if commentInfoTb(j,1)
+                    line = [actCode{j}, blanks(ceil((indentWidth(j)-splittingPos{j}))), actComment{j}];
+                else
+                    line = [actCode{j}, actComment{j}];
+                end
+                replacedTextArray = [replacedTextArray, [line, sprintf('\n')]];
+            end
+            
+            formattedSource = [replacedTextArray{:}];
+        end
     end
        
     methods (Access = private, Static)

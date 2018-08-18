@@ -198,7 +198,7 @@ classdef MBeautify
         end
         
         function formatCurrentEditorPage(doSave)
-            % Performs formatting on the currently active Matlab Editor page.
+            % Performs formatting on the currently acti注释的位置对齐ve Matlab Editor page.
             % Optionally saves the file (if it is possible) and it is forced on the first argument (true). By default
             % the file is not saved.
             
@@ -215,7 +215,7 @@ classdef MBeautify
             
             % Format the code
             formatter = MFormatter(MBeautify.getConfigurationStruct());
-            currentEditorPage.Text = formatter.performFormatting(currentEditorPage.Text);
+            currentEditorPage.Text = formatter.performFormatting(currentEditorPage.Text);            
             
             % Set back the selection
             if ~isempty(selectedPosition)
@@ -223,7 +223,9 @@ classdef MBeautify
             end
             % Use Smart Indent
             currentEditorPage.smartIndentContents();
-            currentEditorPage.makeActive();
+            
+            % 注释的位置对齐
+            currentEditorPage.Text = formatter.autoIndentComments(currentEditorPage.Text);
             
             % Save if it is possible
             if doSave
@@ -233,6 +235,7 @@ classdef MBeautify
                     currentEditorPage.saveAs(currentEditorPage.Filename)
                 end
             end
+            currentEditorPage.makeActive();
         end
         
         function createShortcut(mode)
